@@ -5,7 +5,7 @@ export default function Home() {
   const [message, setMessage] = useState('');
   const [chat, setChat] = useState<string[]>([]);
 
-  const connection = new signalR.HubConnectionBuilder().withUrl('/chat').build();
+  const connection = new signalR.HubConnectionBuilder().withUrl(process.env.SIGNAL_R_URL ?? '' , {accessTokenFactory: () => process.env.SIGNALR_API_KEY ?? ''}).build();
 
   useEffect(() => {
     connection.start().then(() => {
