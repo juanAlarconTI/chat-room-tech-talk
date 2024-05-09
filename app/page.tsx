@@ -1,5 +1,5 @@
 "use client"
-import { HubConnection } from '@microsoft/signalr';
+import { HubConnection, HubConnectionState, LogLevel } from '@microsoft/signalr';
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import {HubConnectionBuilder}  from '@microsoft/signalr';
 
@@ -12,33 +12,45 @@ export default function Home() {
 
   useEffect(() => {
     const connectionBuilder = new HubConnectionBuilder()
-    .withUrl(process.env.NEXT_PUBLIC_SIGNAL_R_URL ?? '' , {
-      accessTokenFactory: () => process.env.NEXT_PUBLIC_SIGNALR_API_KEY ?? ''
-    })
+    .withUrl(process.env.NEXT_PUBLIC_SIGNAL_R_URL ?? '', { headers: { 'Access-Control-Allow-Origin': '*' } })
+    .configureLogging(LogLevel.Information)
     .build();
     setConnection(connectionBuilder);
-    connectionBuilder.start().then(() => {
-      connectionBuilder.invoke('send', 'Hello');
-
-      connectionBuilder.on('message', (message: string) => {
-        setChat([...chat, message]);
-      });
-    });
-
-    return () => {
-      connectionBuilder.stop()
-    };
   },[]);
 
+  useEffect(() => { 
+    if (connection){
+      connection.start().then(() => {
+        console.log('Connected to SignalR');
+        connection.on('newMessage', (message: string) => {
+          console.log('Message received: ', message);
+          setChat((prevChat) => [...prevChat, message]);
+        });
+      }).catch((error: any) => { 
+        console.log('Error connecting to SignalR: ', error);
+      }
+    );
+    }
+  }
+  ,[connection]);
 
   const onTextChange = (e: ChangeEvent<HTMLInputElement>) => {
     setMessage(e.target.value);
   };
 
-  const onMessageSubmit = (e: ChangeEvent<HTMLFormElement>) => {
+  const onMessageSubmit = async  (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
     const payload = { message };
-    connection?.send('send', payload.message);
+    if (connection?.state === HubConnectionState.Connected) {
+      
+      fetch(`${process.env.NEXT_PUBLIC_SIGNAL_R_URL}sendMessage`, { method: "POST", body: message}).then(() => {
+        console.log('Message sent: ', payload.message);
+      }
+      ).catch((error: any) => {
+        console.log('Error sending message: ', error);
+      });
+    }
+
     setMessage('');
   };
 
