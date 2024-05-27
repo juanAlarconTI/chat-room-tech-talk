@@ -40,18 +40,16 @@ export default function Home() {
 
   const onMessageSubmit = async  (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const payload = { message };
     if (connection?.state === HubConnectionState.Connected) {
       
-      fetch(`${process.env.NEXT_PUBLIC_SIGNAL_R_URL}sendMessage`, { method: "POST", body: message}).then(() => {
-        console.log('Message sent: ', payload.message);
-      }
-      ).catch((error: any) => {
+      connection.invoke('SendMessage', message).then(() => {
+        setMessage('');
+      })
+      .catch((error: any) => {
         console.log('Error sending message: ', error);
       });
     }
 
-    setMessage('');
   };
 
   return (
