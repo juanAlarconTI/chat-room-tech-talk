@@ -1,14 +1,19 @@
 "use client"
 import { HubConnection, HubConnectionState, LogLevel } from '@microsoft/signalr';
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import {HubConnectionBuilder}  from '@microsoft/signalr';
+
+type Message = {
+  message: string;
+  isLocal: boolean;
+};
 
 export default function Home() {
   const [message, setMessage] = useState('');
-  const [chat, setChat] = useState<string[]>([]);
+  const [chat, setChat] = useState<Message[]>([]);
   const [connection, setConnection] = useState<HubConnection | null>(null);
 
-  
+  const userID = useMemo(() => Math.random().toString(36).substring(7), []);
 
   useEffect(() => {
     const connectionBuilder = new HubConnectionBuilder()
@@ -22,9 +27,9 @@ export default function Home() {
     if (connection){
       connection.start().then(() => {
         console.log('Connected to SignalR');
-        connection.on('newMessage', (message: string) => {
+        connection.on('newMessage', (message: string, userId: string) => {
           console.log('Message received: ', message);
-          setChat((prevChat) => [...prevChat, message]);
+          setChat((prevChat) => [...prevChat, {message, isLocal: userId === userID}]);
         });
       }).catch((error: any) => { 
         console.log('Error connecting to SignalR: ', error);
@@ -40,18 +45,16 @@ export default function Home() {
 
   const onMessageSubmit = async  (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const payload = { message };
     if (connection?.state === HubConnectionState.Connected) {
       
-      fetch(`${process.env.NEXT_PUBLIC_SIGNAL_R_URL}sendMessage`, { method: "POST", body: message}).then(() => {
-        console.log('Message sent: ', payload.message);
-      }
-      ).catch((error: any) => {
+      connection.invoke('SendMessage', message, userID).then(() => {
+        setMessage('');
+      })
+      .catch((error: any) => {
         console.log('Error sending message: ', error);
       });
     }
 
-    setMessage('');
   };
 
   return (
@@ -67,8 +70,8 @@ export default function Home() {
         <button>Send</button>
       </form>
       <div>
-        {chat.map((message) => (
-          <div key={message}>{message}</div>
+        {chat.map(({message,isLocal}) => (
+          <div className={isLocal ? 'bg-green-200 text-right': 'bg-blue-200 text-left'} key={message}>{message}</div>
         ))}
       </div>
     </div>
