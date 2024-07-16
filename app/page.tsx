@@ -40,7 +40,7 @@ export default function Home() {
     );
     }
   }
-  ,[connection]);
+  ,[connection,userID]);
 
   const onTextChange = (e: ChangeEvent<HTMLInputElement>) => {
     setMessage(e.target.value);
@@ -90,7 +90,6 @@ export default function Home() {
 
   let isLocalhost = null;
   if (typeof window !== "undefined"){
-
     isLocalhost = window?.location?.hostname === 'localhost';
   }
 
@@ -101,9 +100,10 @@ export default function Home() {
         {chat.map(({message, isLocal, isAI}) => (
           <div className={isLocal ? 'message mine': isAI ? 'message ai': 'message'} key={Math.random().toString(36).substring(7)}>{message}</div>
         ))}
-        <div className='loading'/>
+        {isAIThinking && <div className='loading origin-center rotate-180'/>}
         <section className='chat-input'>
           <input
+            disabled={!!isLocalhost}
             name="message"
             type='text'
             autoComplete='off'
@@ -111,7 +111,7 @@ export default function Home() {
             value={message}
             placeholder="Enter message..."
             />
-          <button disabled={!isLocalhost} className='send-message'>Send</button>
+          <button disabled={!!isLocalhost} className='send-message'>Send</button>
           </section>
       </form>
     </div>
