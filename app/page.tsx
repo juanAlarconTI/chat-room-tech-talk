@@ -39,7 +39,8 @@ export default function Home() {
           if (isAI){
             setIsAIThinking(false);
           }
-          setChat((prevChat) => [...prevChat, {message, isLocal: userId === userID, isAI}]);
+          const messageToSend = message.replace(/ollama:/, '');
+          setChat((prevChat) => [...prevChat, {message: messageToSend, isLocal: userId === userID, isAI}]);
         });
       }).catch((error: any) => { 
         console.log('Error connecting to SignalR: ', error);
