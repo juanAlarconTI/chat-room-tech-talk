@@ -6,14 +6,17 @@ import {HubConnectionBuilder}  from '@microsoft/signalr';
 type Message = {
   message: string;
   isLocal: boolean;
+  isAI: boolean;
 };
 
 export default function Home() {
   const [message, setMessage] = useState('');
+  const [isAIThinking, setIsAIThinking] = useState(false);
   const [chat, setChat] = useState<Message[]>([]);
   const [connection, setConnection] = useState<HubConnection | null>(null);
 
   const userID = useMemo(() => Math.random().toString(36).substring(7), []);
+  const AI_USER='OLLAMA';
 
   useEffect(() => {
     const connectionBuilder = new HubConnectionBuilder()
@@ -29,7 +32,7 @@ export default function Home() {
         console.log('Connected to SignalR');
         connection.on('newMessage', (message: string, userId: string) => {
           console.log('Message received: ', message);
-          setChat((prevChat) => [...prevChat, {message, isLocal: userId === userID}]);
+          setChat((prevChat) => [...prevChat, {message, isLocal: userId === userID, isAI: userId === AI_USER}]);
         });
       }).catch((error: any) => { 
         console.log('Error connecting to SignalR: ', error);
@@ -46,10 +49,38 @@ export default function Home() {
   const onMessageSubmit = async  (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (connection?.state === HubConnectionState.Connected) {
-      
-      connection.invoke('SendMessage', message, userID).then(() => {
+      const messageToSend = message.replace(/ollama:/, '')
+      connection.invoke('SendMessage', messageToSend, userID).then(() => {
         setMessage('');
       })
+      .then(() => {
+        if (message.match(/ollama:/)) { // is localhost
+            setIsAIThinking(true);
+            return fetch('http://localhost:11434/api/generate',{ 
+              method: 'POST',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                model: 'llama3', 
+                prompt: messageToSend,
+                stream: false,
+              })
+            })
+          }
+        })
+        .then(res => {
+          if (res){
+            return res.json();
+          }
+        })
+        .then(result => 
+          {
+            connection.invoke('SendMessage', result.response, AI_USER);
+            setIsAIThinking(false);
+          }
+      )
       .catch((error: any) => {
         console.log('Error sending message: ', error);
       });
@@ -57,23 +88,28 @@ export default function Home() {
 
   };
 
+  const isLocalhost = window.location.hostname === 'localhost';
+
   return (
     <div>
       <h1>Chat Application</h1>
-      <form onSubmit={onMessageSubmit}>
-        <input
-          name="message"
-          onChange={onTextChange}
-          value={message}
-          placeholder="Enter message..."
-        />
-        <button>Send</button>
-      </form>
-      <div>
-        {chat.map(({message,isLocal}) => (
-          <div className={isLocal ? 'bg-green-200 text-right': 'bg-blue-200 text-left'} key={message}>{message}</div>
+      <form className='chat-container' onSubmit={onMessageSubmit}>
+        {chat.map(({message, isLocal, isAI}) => (
+          <div className={isLocal ? 'message mine': isAI ? 'message ai': 'message'} key={Math.random().toString(36).substring(7)}>{message}</div>
         ))}
-      </div>
+        <div className='loading'/>
+        <section className='chat-input'>
+          <input
+            name="message"
+            type='text'
+            autoComplete='off'
+            onChange={onTextChange}
+            value={message}
+            placeholder="Enter message..."
+            />
+          <button disabled={!isLocalhost} className='send-message'>Send</button>
+          </section>
+      </form>
     </div>
   );
 }
