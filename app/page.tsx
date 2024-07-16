@@ -1,4 +1,4 @@
-"use client"
+'use client'
 import { HubConnection, HubConnectionState, LogLevel } from '@microsoft/signalr';
 import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import {HubConnectionBuilder}  from '@microsoft/signalr';
