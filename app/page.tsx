@@ -88,7 +88,7 @@ export default function Home() {
 
   };
 
-  const isLocalhost = window.location.hostname === 'localhost';
+  const isLocalhost = window?.location?.hostname === 'localhost';
 
   return (
     <div>
