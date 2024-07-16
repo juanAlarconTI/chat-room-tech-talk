@@ -32,7 +32,14 @@ export default function Home() {
         console.log('Connected to SignalR');
         connection.on('newMessage', (message: string, userId: string) => {
           console.log('Message received: ', message);
-          setChat((prevChat) => [...prevChat, {message, isLocal: userId === userID, isAI: userId === AI_USER}]);
+          if (message.match(/ollama:/)) { // is localhost
+            setIsAIThinking(true);
+          }
+          const isAI = userId === AI_USER;
+          if (isAI){
+            setIsAIThinking(false);
+          }
+          setChat((prevChat) => [...prevChat, {message, isLocal: userId === userID, isAI}]);
         });
       }).catch((error: any) => { 
         console.log('Error connecting to SignalR: ', error);
@@ -49,14 +56,13 @@ export default function Home() {
   const onMessageSubmit = async  (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (connection?.state === HubConnectionState.Connected) {
-      const messageToSend = message.replace(/ollama:/, '')
-      connection.invoke('SendMessage', messageToSend, userID).then(() => {
+      connection.invoke('SendMessage', message, userID).then(() => {
         setMessage('');
       })
       .then(() => {
         if (message.match(/ollama:/)) { // is localhost
-            setIsAIThinking(true);
-            return fetch('http://localhost:11434/api/generate',{ 
+          setIsAIThinking(true);
+          return fetch('http://localhost:11434/api/generate',{ 
               method: 'POST',
               headers: {
                 'Accept': 'application/json',
@@ -64,7 +70,7 @@ export default function Home() {
               },
               body: JSON.stringify({
                 model: 'llama3', 
-                prompt: messageToSend,
+                prompt: message.replace(/ollama:/, ''),
                 stream: false,
               })
             })
