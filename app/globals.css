@@ -17,6 +17,7 @@
 }
 
 .loading::after {
+  
   animation: spinner 1s infinite linear;
 }
 
@@ -120,12 +121,14 @@ body {
     }
 
     .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      height: 20px;
       transform: rotate(360deg);
-      position: relative;
     }
 
     .loading::after {

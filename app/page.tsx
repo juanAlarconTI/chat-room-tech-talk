@@ -70,7 +70,7 @@ export default function Home() {
               },
               body: JSON.stringify({
                 model: 'llama3', 
-                prompt: message.replace(/ollama:/, ''),
+                prompt: message.replace(/ollama:/, 'envia respuesta entre parrafos sin formato'),
                 stream: false,
               })
             })
