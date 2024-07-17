@@ -1,7 +1,6 @@
 'use client'
-import { HubConnection, HubConnectionState, LogLevel } from '@microsoft/signalr';
+import { HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr';
 import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
-import {HubConnectionBuilder}  from '@microsoft/signalr';
 
 type Message = {
   message: string;
@@ -104,9 +103,11 @@ export default function Home() {
     <div>
       <h1>Chat Application</h1>
       <form className='chat-container' onSubmit={onMessageSubmit}>
-        {chat.map(({message, isLocal, isAI}) => (
-          <div className={isLocal ? 'message mine': isAI ? 'message ai': 'message'} key={Math.random().toString(36).substring(7)}>{message}</div>
-        ))}
+        <section className="messages-container">
+          {chat.map(({message, isLocal, isAI}) => (
+            <div className={isLocal ? 'message mine': isAI ? 'message ai': 'message'} key={Math.random().toString(36).substring(7)}>{message}</div>
+          ))}
+        </section>
         {isAIThinking && <div className='loading origin-center rotate-180'/>}
         <section className='chat-input'>
           <input

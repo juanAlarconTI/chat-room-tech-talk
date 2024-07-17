@@ -31,6 +31,7 @@
 
 body {
   color: rgb(var(--foreground-rgb));
+  height: 100vh;
   background: linear-gradient(
       to bottom,
       transparent,
@@ -43,9 +44,9 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    height: 100vh;
+    height: calc(100vh - 24px);
     padding: 1rem;
-    overflow-y: auto;
+    overflow-y: scroll;
   }
 
   .chat-input{ 
@@ -86,12 +87,22 @@ body {
       opacity: 0.5;
       cursor: not-allowed;
     }
+    .messages-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: transparent transparent;
+    }
 
 
     .message {
       display: flex;
       align-items: center;
       align-self: flex-start;
+      max-width: 70%;
       padding: 0.5rem;
       color: gray;
       margin-bottom: 0.5rem;
